@@ -1,0 +1,52 @@
+[
+  {
+    "id": "skill-md",
+    "carveOut": true,
+    "prompt": "Write the complete contents of a SKILL.md for a skill called link-checker that finds broken markdown links in a repo. Include YAML frontmatter with name and description, then a body with sections for when to use it and the steps to take. Output only the file contents."
+  },
+  {
+    "id": "task-prompt",
+    "carveOut": true,
+    "prompt": "Write a Suits workflow task prompt file. It takes a transcript variable and produces a topic-grouped summary. Include a Role section, an Inputs section, a Steps section and an Output Format section. Output only the file contents."
+  },
+  {
+    "id": "python-docstring",
+    "carveOut": true,
+    "prompt": "Write a Python function normalize_whitespace(text) that collapses runs of whitespace and strips leading and trailing space. Include a full docstring with Args and Returns. Output only the code."
+  },
+  {
+    "id": "commit-message",
+    "carveOut": true,
+    "prompt": "Write a git commit message for a change that adds retry logic with exponential backoff to an HTTP client, and fixes a bug where a 429 response was treated as fatal. Output only the commit message."
+  },
+  {
+    "id": "client-prose",
+    "carveOut": true,
+    "prompt": "Draft a 150-word LinkedIn post for a healthcare executive about why their company moved its claims process in house. Warm, plain, first person. Output only the post."
+  },
+  {
+    "id": "chat-control",
+    "carveOut": false,
+    "prompt": "Is a SessionStart hook enough on its own to keep a style rule in front of the model for a whole session? Answer me directly."
+  },
+  {
+    "id": "skill-md-2",
+    "carveOut": true,
+    "prompt": "Write the complete contents of a SKILL.md for a skill called release-notes-writer that turns merged pull requests into customer-facing release notes. Include YAML frontmatter with name and description, then a body covering when to use it, when NOT to use it, the steps to take, and two worked examples. Output only the file contents."
+  },
+  {
+    "id": "skill-md-3",
+    "carveOut": true,
+    "prompt": "Write the complete contents of a SKILL.md for a skill called meeting-recap that turns a raw transcript into a topic-grouped recap with action items. Include YAML frontmatter with name and description, then a body with when to use it, the extraction steps, the output format, and a gotchas section. Output only the file contents."
+  },
+  {
+    "id": "skill-description",
+    "carveOut": true,
+    "prompt": "Write only the YAML frontmatter description field value for a skill that validates that every image in a docs folder has alt text. It must read as a trigger string Claude matches a user request against, naming the phrases a user might say. One paragraph, no bullets. Output only the description text."
+  },
+  {
+    "id": "skill-gotchas",
+    "carveOut": true,
+    "prompt": "Write the Gotchas section of a SKILL.md for a skill that renames files in bulk. Cover three failure modes a maintainer would hit and what to do about each. Full prose, no telegraphic notes. Output only that section."
+  }
+]

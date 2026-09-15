@@ -123,6 +123,24 @@ seven days are cleaned up automatically.
 An `off` takes effect on your next message, since the current turn's directive
 was injected before the command ran.
 
+## Does the carve-out actually hold?
+
+Measured, not assumed. Ten prompts, two arms, one control. Nine cases compared,
+zero leaks: the directive did not bleed into skills, prompts, code, commit
+messages or client-voice copy. Full table and method in
+[eval/RESULTS.md](eval/RESULTS.md).
+
+```bash
+node eval/run.mjs          # every case
+node eval/run.mjs skill-md # one case
+```
+
+Each case is a separate `claude -p` call, so it costs real usage. Nothing runs
+until you invoke it.
+
+RESULTS.md also records why this injects a directive rather than compressing the
+finished reply, which was tried and measured first.
+
 ## Writing your own directive
 
 The directive is injected verbatim, so write it the way you want the model to

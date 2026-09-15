@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 # Per-session off switches written by style-toggle.sh
 state/
+
+# Eval run outputs: generated, large, and stale the moment a model updates.
+# eval/RESULTS.md carries the findings; re-run eval/run.mjs for fresh numbers.
+eval/runs/
