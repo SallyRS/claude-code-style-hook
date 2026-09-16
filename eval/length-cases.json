@@ -1,0 +1,8 @@
+[
+  {"id": "q-short", "prompt": "Does a SessionStart hook fire on resume, or only on a fresh start?"},
+  {"id": "q-why", "prompt": "Why would a style rule in CLAUDE.md stop being followed halfway through a long session?"},
+  {"id": "q-compare", "prompt": "Stop hook versus UserPromptSubmit hook for enforcing a writing style. Which is better and why?"},
+  {"id": "q-diagnose", "prompt": "My hook fires but the style is ignored inside subagents. What is going on?"},
+  {"id": "q-openended", "prompt": "What do you think about using hooks to control how a model writes?"},
+  {"id": "q-factual", "prompt": "What does additionalContext do in a UserPromptSubmit hook?"}
+]
