@@ -57,6 +57,6 @@
   {
     "id": "skill-invoked",
     "carveOut": true,
-    "prompt": "Use the Skill tool to invoke the ai-writing-guard skill, then apply it to this paragraph and return the cleaned version plus a short note on what you changed: 'In today's rapidly evolving landscape, organizations must leverage cutting-edge solutions to unlock transformative value. It's not just about technology - it's about people. Let's dive in.'"
+    "prompt": "Use the Skill tool to invoke the find-skills skill, then explain in full prose what that skill is for and when someone should reach for it."
   }
 ]

@@ -36,18 +36,33 @@ const FLOOR = 4 // articles per 100 words that ordinary prose clears easily
  * the fence markers removed.
  */
 function articleDensity(text) {
-  // Fences may open with three backticks or more; a four-backtick wrapper is
-  // common when the content itself contains a fence. Match the opener's own
-  // length so the close is the real close.
-  const stripped = text
-    .replace(/^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$/gm, " ")
-    .replace(/^---\n[\s\S]*?^---[ \t]*$/m, " ")
-  const usable = stripped.trim().split(/\s+/).filter(Boolean).length >= 15
-  const prose = usable ? stripped : text.replace(/^[ \t]*(`{3,}|~{3,})\w*[ \t]*$/gm, " ")
-  const words = prose.trim().split(/\s+/).filter(Boolean).length
+  const fence = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^[ \t]*\1[ \t]*$/gm
+  const wordsIn = t => t.trim().split(/\s+/).filter(Boolean).length
+
+  // Prose OUTSIDE fences, which is the normal case.
+  const outside = text.replace(fence, " ").replace(/^---\n[\s\S]*?^---[ \t]*$/m, " ")
+
+  // Prose INSIDE fences. An answer whose whole body is one fenced document is
+  // still prose worth grading: a SKILL.md, a commit message, a docstring. The
+  // first bug here graded only the few words outside such a fence, which scored
+  // a full normal-prose SKILL.md as 0.0 because the leftover was a status line.
+  let inside = ""
+  for (const m of text.matchAll(fence)) {
+    inside += " " + m[0]
+      .replace(/^[ \t]*(`{3,}|~{3,})[^\n]*\n/, " ")   // opening fence + language
+      .replace(/^[ \t]*(`{3,}|~{3,})[ \t]*$/gm, " ")   // closing fence
+      .replace(/^---\n[\s\S]*?^---[ \t]*$/m, " ")     // YAML frontmatter inside it
+  }
+
+  // Grade whichever body actually carries the answer. Comparing word counts,
+  // rather than testing one against a fixed floor, is what makes this robust to
+  // a short preamble sitting outside a long fenced document.
+  const prose = wordsIn(inside) > wordsIn(outside) ? inside : outside
+  const words = wordsIn(prose)
   if (!words) return null
   return ((prose.match(ARTICLE) || []).length / words) * 100
 }
+
 
 const only = process.argv[2]
 const cases = only ? CASES.filter((c) => c.id === only) : CASES

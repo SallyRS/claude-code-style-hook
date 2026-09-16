@@ -1,96 +1,89 @@
 # Results
 
-Three questions, measured rather than assumed:
+Five mechanisms measured against each other, on one machine, Claude Opus 5,
+Claude Code 2.1.271, 2026-09-15 and 2026-09-16.
 
-1. Does the directive leak into work that must stay in normal prose?
-2. Does a hook beat a Claude Code **output style** for the same job?
-3. Is correcting a finished reply better than shaping it before it is written?
+The question behind all of it: what actually keeps a writing-style instruction in
+front of the model, and what does it cost in unwanted side effects?
 
-Run 2026-09-15 and 2026-09-16 against Claude Opus 5, Claude Code 2.1.271.
-Reproduce with `node eval/run.mjs`.
+## The headline
 
-## Method
+A skill loading mid-turn is the case that separates every approach. On a plain
+question they all work. Six runs per arm, one prompt that loads a read-only
+skill and then asks an ordinary question:
 
-Twelve prompts. Eleven must come back as ordinary prose (a SKILL.md, a workflow
-task prompt, a Python function, a commit message, client-voice copy, a 900-word
-article). One is a chat control that must come back terse.
+| arm | n | mean words | range | vs baseline | articles/100w |
+| :-- | --: | --: | :-- | --: | --: |
+| nothing | 6 | 337 | 305-364 | — | 10.3 |
+| output style | 6 | 268 | 219-315 | -21% | 7.9 |
+| function hook (`prompt.section`) | 6 | 212 | 174-230 | -37% | 7.6 |
+| command hook + function hook | 6 | 198 | 163-215 | -41% | 7.8 |
+| **command hook** | 6 | **178** | 139-216 | **-47%** | **6.2** |
 
-Grader is article density. The directive tells Claude to drop "the", "a" and
-"an", so a low score means it was followed. Ordinary English runs roughly 6-12
-articles per 100 words. Fenced code and YAML frontmatter are stripped first; an
-answer that is entirely one fence is graded on its own prose, since a docstring
-or a commit body is the prose.
+The command hook wins, and the margins clear their error bars: 89 words below
+the output style (se 21) and 34 below the function hook (se 15).
 
-Three arms: hook registered, output style active, neither.
+This is the opposite of what the mechanism suggests. A command hook's
+`additionalContext` is a system reminder inside the conversation — the weakest
+channel Claude Code offers for an instruction. An output style sits in the system
+prompt and gets a periodic reminder the engine sends on its own. The strongest
+channel finished last and the weakest finished first.
 
-## 1. Carve-out adherence
+Stacking the command hook and the function hook gave 198 words, statistically
+tied with both singles. So "more injections per turn" does not explain the
+ordering either. No tested hypothesis explains it; the ranking is a measurement,
+not a theory.
 
-| case | hook | output style | neither |
-| :-- | --: | --: | --: |
-| skill-md | 9.0 | 7.9 | 7.9 |
-| skill-md-2 | 9.9 | 5.9 | 11.1 |
-| skill-md-3 | 11.5 | 9.9 | 10.0 |
-| skill-description | 8.6 | 7.4 | 4.9 |
-| skill-gotchas | 13.3 | 12.8 | 13.3 |
-| task-prompt | 9.0 | 7.0 | not obtainable |
-| python-docstring | 6.0 | 6.7 | 7.4 |
-| commit-message | 11.8 | 12.2 | 12.2 |
-| client-prose | 9.9 | 9.5 | 6.2 |
-| long-article (934-991 words) | 11.2 | 12.2 | not run |
-| chat-control | 0.0 | 0.0 | 13.1 |
+## Carve-out adherence
 
-Zero leaks in either active arm. Both scored 0.0 on the chat control and left
-every artifact case in ordinary prose, in the same range as the arm with nothing
-running at all.
+Twelve prompts, eleven of which must come back as ordinary prose: a SKILL.md, a
+workflow task prompt, a Python function with a docstring, a commit message,
+client-voice copy, a 900-word article. The twelfth is a chat control that must
+come back terse.
 
-The control is what makes the rest trustworthy. Same session, same configuration:
-the chat answer went terse while the artifact cases did not. So the instruction
-was live and still did not bleed.
+Grader is article density. The directive says to drop "the", "a" and "an", so a
+low score means it was followed. Ordinary English runs roughly 6-12 per 100 words.
 
-`task-prompt` has no "neither" number. With nothing active, the model reads
-"write a task prompt file" as a job to carry out with tools and exhausts its turn
-budget instead of printing the file. A property of that prompt in headless mode,
-not a result.
+| arm | leaks | chat control |
+| :-- | --: | --: |
+| command hook | 0 | 0.0 |
+| function hook | 0 | 0.6 |
+| output style | 0 | 0.0 |
+| upstream caveman skill | 0 | 1.0 |
 
-## 2. Hook versus output style
+All four hold. Nothing bled into client copy, skill files, prompts, code, or
+commit messages, while the chat control went terse in every active arm.
 
-They score the same on adherence. They are not interchangeable.
+The control is what makes that trustworthy: same configuration, same session, and
+the chat answer went terse while the artifact cases did not.
 
-| | hook | output style |
-| :-- | :-- | :-- |
-| Where the text lands | system reminder inside the conversation | system prompt |
-| Survives compaction | summarized away with the rest of the conversation | "System prompt and output style: Both still apply" |
-| Periodic re-arm | none; the hook re-injects on its own schedule | Claude Code reminds Claude of the style during the conversation |
-| Model gating | yes, by reading the transcript | **no** |
-| Subagents | excluded via `agent_id` | excluded; subagents run their own system prompt |
+## Comparison with the upstream `caveman` skill
 
-**The model-gating difference is real and was verified.** With the style active
-and the hook off, a `claude -p --model claude-sonnet-5` run answered in the terse
-register. A style applies to whatever model is running.
+[JuliusBrussee/caveman](https://github.com/juliusbrussee/caveman) solves a
+different problem — token cost across thirty-plus agents — with a skill plus a
+proxy. On the twelve-case carve-out eval, invoked properly, it tied with
+everything here: twelve cases, zero leaks either side.
 
-So the choice is not about quality:
+Its rule text is better written than this repo's first draft, and three of its
+rules were adopted here after measuring:
 
-- **Want it on one model only → hook.** No style can do this.
-- **Want it to survive compaction on every model → output style.** Fewer moving
-  parts than this repo: one markdown file and one settings key.
+```
+Never drop not/never/no/only/except: flipping meaning costs more than any token saved.
+Never ADD a word to sound caveman. Compression only cuts, never grows.
+If caveman phrasing is not shorter than plain phrasing, use plain.
+```
 
-A `PostModelSwitch` hook can add model-specific context, and the docs list it as
-context-only, so it could inject a style-flavoured block on an Opus switch. It
-fires on a model change, not every turn, which makes it weaker than
-`UserPromptSubmit` for keeping an instruction in front of the model. Whether an
-external file write of `outputStyle` reloads mid-session was not testable
-headlessly; a fresh `-p` session reads settings at startup and proves nothing.
+It also resolves a contradiction this repo's directive originally had, between
+"drop articles" and "must be understood on first read", by saying which wins:
+clarity.
 
-## 3. Why the directive is injected, not applied afterwards
+## Why the directive is injected rather than applied afterwards
 
 The opposite approach was built and measured first: let the model answer, then
 compress the finished reply with a cheaper model on a `turn.complete` function
-hook. Three turns saved 13%, 8% and 10% of characters.
+hook. Three turns saved 13%, 8% and 10% of characters, and it was worse.
 
-It was worse, for structural reasons.
-
-**No fat was left.** Injection had already removed the padding, so compression
-cut facts:
+**There was no fat left**, so compression cut facts:
 
 | injected | compressed afterwards |
 | :-- | :-- |
@@ -99,45 +92,83 @@ cut facts:
 The first says restart to stop running old code. The second reads as though the
 restart will load old code. The meaning inverted.
 
-**It optimized the wrong thing.** It scored characters removed. Nothing told it
-correctness outweighs length, and length is the easier of the two to measure.
+It also optimized the wrong thing — it scored characters removed, and nothing
+told it correctness outweighs length — and it normalized the register back
+toward ordinary English, undoing the directive.
 
-**It fought the directive.** Ordinary English is a compressor's prior, so it
-normalized the register back: "prevention does most work" for "prevention
-already do most of work".
-
-Two mechanisms cannot help here at all, both confirmed in the docs. A blocking
-`Stop` hook makes Claude write a second reply *below* the first, so the verbose
-original stays on screen. `turn.complete` has the same shape: `TurnCompleteResult`
-is `{ text }`, and a text other than the answer's "is shown beneath it". Only
-`turn.step` truly replaces, since its chunks are "what is shown and recorded" —
-and on this evidence, correction after writing is the wrong strategy whichever
-API delivers it.
+Two mechanisms cannot help at all, confirmed in the docs and the type
+declarations. A blocking `Stop` hook makes Claude write a second reply *below*
+the first. `turn.complete` has the same shape: `TurnCompleteResult` is `{ text }`
+and a text other than the answer's "is shown beneath it". Only `turn.step`
+truly replaces, since its chunks are "what is shown and recorded".
 
 ## What did not hold up
 
-An earlier draft of this file claimed register drifts across a long session,
-based on scoring 90 replies by position: article density rose from 3.9 to 4.9 per
-100 words between the third and fourth quarters. That is inside the noise. With
-22-23 replies per quarter and per-reply values ranging 0.0 to 12.5, the standard
-error is around 0.8. Two noisy samples, not a decline.
+Three claims made during this work were retracted after more data. They are kept
+here because each was stated confidently first.
 
-Article density also tracks subject matter, not only obedience. A reply quoting
-paths, commands and documentation carries more articles than a status report, so
-the metric needs content-type controls before it can measure drift at all.
+**"Register drifts across a long session."** Based on scoring 90 replies by
+position: density rose 3.9 to 4.9 between the third and fourth quarters. That is
+inside the noise — 22-23 replies per quarter, per-reply values ranging 0.0 to
+12.5, standard error around 0.8.
+
+**"The system prompt arm is better."** At n=3 it looked like 8.2 against 10.3.
+At n=9 the difference was 1.7 with a standard error of 1.6. It took a cleaner
+test, not a bigger one, to separate the arms.
+
+**"More injections per turn explains the gap."** Predicted that stacking both
+mechanisms would beat either. It tied with both.
+
+## Bugs in this harness, found and fixed
+
+Three, all of which produced wrong numbers before they were caught.
+
+**Failed runs graded as prose.** A `claude -p` call that errored wrote
+`RUN FAILED: …` to the output file, and the grader scored that text and called
+it a pass. Now a failed run is marked `ERROR (not graded)`.
+
+**Fences assumed to be exactly three backticks.** An answer wrapped in four
+(```` ````markdown ````) was mis-stripped and a full normal-prose SKILL.md scored
+0.0. The fence matcher now captures the opener's own length.
+
+**An entirely-fenced answer graded on its preamble.** When a reply was a short
+status line plus one long fenced document, the grader scored the status line —
+three words — and reported a leak that did not exist. It now grades whichever
+body carries more words, inside the fence or outside it.
+
+**The interference prompt used the wrong skill.** It originally invoked
+`ai-writing-guard`, which routes through a paid MCP service *and rewrites prose*.
+Four jobs were started and abandoned, and any register change could have been the
+skill's edit rather than the directive's. Replaced with `find-skills`: read-only,
+no scripts, no MCP. The swap changed the result — arms that had looked tied
+separated cleanly.
+
+## Reproducing
+
+```bash
+node eval/run.mjs                  # 12-case carve-out, current configuration
+node eval/interference.mjs <arm>   # 6 runs of the skill-interference test
+node eval/length.mjs               # word counts on plain chat questions
+```
+
+Set up the arm first: toggle the command hook with `hooks/style-toggle.sh`, set
+`outputStyle` in settings, or pass `--plugin-dir ./arms/function-hook-sysprompt`.
+See `arms/README.md`.
+
+Every case is a separate `claude -p` call against your own account. Nothing runs
+until you invoke it.
 
 ## Limits
 
-One sample per case per arm. Treat individual numbers as indicative and the
-zero-leak result across arms as the finding.
+One prompt drives the interference test. The ordering is solid for that prompt
+and unverified for others.
 
-Density measures register, not length or correctness. A SKILL.md could keep its
-articles and still come back thinner than it should.
+Six runs per arm. Enough to separate 178 from 268, not enough to split 178 from
+198.
 
-The invoked-skill case is still untested. Both arms hit the turn limit while a
-long-running skill was still executing, so what was captured is a status line
-rather than skill output. It needs a skill that finishes quickly.
+Article density measures register, not correctness. It also tracks subject
+matter: a reply quoting paths and commands carries more articles than a status
+report, regardless of obedience.
 
-The grader had two bugs during the first run, both fixed before these numbers
-were produced: it graded failed runs as prose, and it assumed fences open with
-exactly three backticks, which mis-scored an output wrapped in four.
+Run outputs are gitignored — generated, large, and stale as soon as a model
+updates. The numbers above are the record; the scripts reproduce them.

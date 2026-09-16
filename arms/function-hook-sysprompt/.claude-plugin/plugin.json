@@ -1,0 +1,7 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "caveman-sysprompt",
+  "version": "0.1.0",
+  "description": "Injects the caveman directive into the system prompt itself, gated to one model",
+  "author": { "name": "Sally Slater" }
+}

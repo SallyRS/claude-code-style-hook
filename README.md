@@ -135,38 +135,42 @@ was injected before the command ran.
 
 ## Should you use this, or just an output style?
 
-Claude Code has a built-in feature that does the same job: an
-[output style](https://code.claude.com/docs/en/output-styles) is one markdown
-file plus one settings key. Both were measured side by side and they score the
-same on adherence, so pick on the difference that matters to you:
+Both were measured, along with three other mechanisms. The command hook in this
+repo won, which is not what the mechanism predicts:
 
-| | this hook | output style |
-| :-- | :-- | :-- |
-| Model gating | yes | **no** — verified: a Sonnet 5 run answered in the terse register |
-| Survives compaction | no, summarized with the conversation | yes |
-| Built-in periodic re-arm | no | yes |
-| Moving parts | a script, four event registrations, a toggle | one file, one setting |
+| arm | mean words | vs no directive |
+| :-- | --: | --: |
+| nothing | 337 | — |
+| output style | 268 | -21% |
+| function hook writing the system prompt | 212 | -37% |
+| **this hook** | **178** | **-47%** |
 
-**Want it on one model only, use this. Want it everywhere and durable, use an
-output style** — it is less machinery for the same result.
+An output style sits in the system prompt and gets a periodic reminder from
+Claude Code itself. This hook injects a system reminder into the conversation,
+the weakest channel available. The weakest channel won by 89 words (se 21).
+
+No tested hypothesis explains that. Stacking mechanisms did not help either.
+Full numbers, method, and three retracted claims in
+[eval/RESULTS.md](eval/RESULTS.md).
+
+The one thing an output style cannot do is gate by model — verified: a Sonnet 5
+run under the style answered in the terse register. This hook reads the model
+from the transcript and stays silent on anything else.
 
 ## Does the carve-out actually hold?
 
-Measured, not assumed. Twelve prompts, three arms, one control. Zero leaks in
-either active arm: the directive did not bleed into skills, workflow prompts,
-code, commit messages, client-voice copy, or a 900-word article. Full tables and
-method in [eval/RESULTS.md](eval/RESULTS.md).
+Yes, measured. Twelve prompts, four mechanisms, one control. Zero leaks in every
+active arm: nothing bled into skills, workflow prompts, code, commit messages,
+client-voice copy, or a 900-word article, while the chat control went terse.
 
 ```bash
-node eval/run.mjs          # every case
-node eval/run.mjs skill-md # one case
+node eval/run.mjs                  # 12-case carve-out
+node eval/interference.mjs <arm>   # the test that separates the mechanisms
+node eval/length.mjs               # word counts on plain questions
 ```
 
-Each case is a separate `claude -p` call, so it costs real usage. Nothing runs
+Each case is a separate `claude -p` call against your own account. Nothing runs
 until you invoke it.
-
-RESULTS.md also records why this injects a directive rather than compressing the
-finished reply, which was tried and measured first.
 
 ## Writing your own directive
 

@@ -6,3 +6,4 @@ state/
 # Eval run outputs: generated, large, and stale the moment a model updates.
 # eval/RESULTS.md carries the findings; re-run eval/run.mjs for fresh numbers.
 eval/runs/
+directives/upstream-*.md
