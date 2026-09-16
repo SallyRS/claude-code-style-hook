@@ -7,8 +7,7 @@ session only when a model you name is answering. The included example uses a
 terse "caveman" register. The directive itself is an ordinary text file, so you
 can replace it with your own instructions.
 
-A Claude Code hook is a command that the Claude Code harness runs at specified
-lifecycle events. This hook writes JSON containing
+This hook writes JSON containing
 `hookSpecificOutput.additionalContext`. Claude Code wraps that text in a system
 reminder and inserts it into the conversation where the event fired. It does
 not alter the main system prompt.
