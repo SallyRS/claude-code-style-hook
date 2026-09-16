@@ -133,12 +133,29 @@ seven days are cleaned up automatically.
 An `off` takes effect on your next message, since the current turn's directive
 was injected before the command ran.
 
+## Should you use this, or just an output style?
+
+Claude Code has a built-in feature that does the same job: an
+[output style](https://code.claude.com/docs/en/output-styles) is one markdown
+file plus one settings key. Both were measured side by side and they score the
+same on adherence, so pick on the difference that matters to you:
+
+| | this hook | output style |
+| :-- | :-- | :-- |
+| Model gating | yes | **no** — verified: a Sonnet 5 run answered in the terse register |
+| Survives compaction | no, summarized with the conversation | yes |
+| Built-in periodic re-arm | no | yes |
+| Moving parts | a script, four event registrations, a toggle | one file, one setting |
+
+**Want it on one model only, use this. Want it everywhere and durable, use an
+output style** — it is less machinery for the same result.
+
 ## Does the carve-out actually hold?
 
-Measured, not assumed. Ten prompts, two arms, one control. Nine cases compared,
-zero leaks: the directive did not bleed into skills, prompts, code, commit
-messages or client-voice copy. Full table and method in
-[eval/RESULTS.md](eval/RESULTS.md).
+Measured, not assumed. Twelve prompts, three arms, one control. Zero leaks in
+either active arm: the directive did not bleed into skills, workflow prompts,
+code, commit messages, client-voice copy, or a 900-word article. Full tables and
+method in [eval/RESULTS.md](eval/RESULTS.md).
 
 ```bash
 node eval/run.mjs          # every case

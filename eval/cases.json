@@ -48,5 +48,15 @@
     "id": "skill-gotchas",
     "carveOut": true,
     "prompt": "Write the Gotchas section of a SKILL.md for a skill that renames files in bulk. Cover three failure modes a maintainer would hit and what to do about each. Full prose, no telegraphic notes. Output only that section."
+  },
+  {
+    "id": "long-article",
+    "carveOut": true,
+    "prompt": "Write a 900-word article for a professional-services audience on why most firms fail to get value from AI pilots. Full prose, no bullet lists, no headings. Make a clear argument with three supporting points and a conclusion. Output only the article."
+  },
+  {
+    "id": "skill-invoked",
+    "carveOut": true,
+    "prompt": "Use the Skill tool to invoke the ai-writing-guard skill, then apply it to this paragraph and return the cleaned version plus a short note on what you changed: 'In today's rapidly evolving landscape, organizations must leverage cutting-edge solutions to unlock transformative value. It's not just about technology - it's about people. Let's dive in.'"
   }
 ]
