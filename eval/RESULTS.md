@@ -1,6 +1,13 @@
 # Carve-out adherence: results
 
-Run on 2026-09-15 against Claude Opus 5, using `directives/caveman.md`.
+Run on 2026-09-15 against Claude Opus 5, using the article-dropping directive
+now kept as `directives/caveman-strict.md`.
+
+The grader is article density, so it only discriminates against a directive that
+actually drops articles. `directives/caveman.md` was later changed to keep grammar
+intact, which makes it terse without being measurable this way. Re-running the eval
+against the current default needs a different grader; the zero-leak finding below
+stands for the strict variant, which is the harder case.
 
 The directive is an instruction, not a mechanism. Nothing stops it bleeding into
 work that must stay in normal prose. This measures whether it does.

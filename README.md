@@ -31,7 +31,17 @@ git clone https://github.com/SallyRS/claude-code-style-hook.git ~/claude-code-st
 ```
 
 `model` is matched as a prefix, so `claude-opus-5` also covers dated and point
-variants. Use `directives/terse.md` for a plainer rule, or write your own file.
+variants.
+
+Three directives ship:
+
+| file | what it asks for |
+| :-- | :-- |
+| `directives/caveman.md` | short and blunt, grammar intact. The default, and the one in daily use |
+| `directives/caveman-strict.md` | also drops articles. What the eval was run against |
+| `directives/terse.md` | a plainer wording of the same idea |
+
+Or write your own file and point `config.json` at it.
 
 **3. Register the hook on four events in `~/.claude/settings.json`.**
 
