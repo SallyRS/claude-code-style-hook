@@ -133,29 +133,32 @@ seven days are cleaned up automatically.
 An `off` takes effect on your next message, since the current turn's directive
 was injected before the command ran.
 
-## Should you use this, or just an output style?
+## Should you use this, or something else?
 
-Both were measured, along with three other mechanisms. The command hook in this
-repo won, which is not what the mechanism predicts:
+Six mechanisms were measured against each other on the case that separates them:
+a skill loading mid-turn, between the directive and the reply. Six runs each.
 
 | arm | mean words | vs no directive |
 | :-- | --: | --: |
+| nopus (`Stop` hook) | 361 | +7% |
 | nothing | 337 | — |
 | output style | 268 | -21% |
 | function hook writing the system prompt | 212 | -37% |
 | **this hook** | **178** | **-47%** |
 
-An output style sits in the system prompt and gets a periodic reminder from
-Claude Code itself. This hook injects a system reminder into the conversation,
-the weakest channel available. The weakest channel won by 89 words (se 21).
-
-No tested hypothesis explains that. Stacking mechanisms did not help either.
-Full numbers, method, and three retracted claims in
-[eval/RESULTS.md](eval/RESULTS.md).
+That ordering is the opposite of what the mechanism predicts. An output style
+sits in the system prompt and gets a periodic reminder from Claude Code itself;
+this hook injects a system reminder into the conversation, the weakest channel
+available. The weakest channel won by 89 words (se 21). Stacking mechanisms did
+not help. No tested hypothesis explains it.
 
 The one thing an output style cannot do is gate by model — verified: a Sonnet 5
 run under the style answered in the terse register. This hook reads the model
 from the transcript and stays silent on anything else.
+
+Full numbers, the carve-out results, a comparison with
+[JuliusBrussee/caveman](https://github.com/juliusbrussee/caveman), three
+retracted claims and four harness bugs: [eval/RESULTS.md](eval/RESULTS.md).
 
 ## Does the carve-out actually hold?
 

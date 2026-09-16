@@ -1,61 +1,84 @@
 # Results
 
-Five mechanisms measured against each other, on one machine, Claude Opus 5,
+What actually keeps a writing-style instruction in front of the model, and what
+does it cost in side effects nobody wanted.
+
+Six mechanisms, measured against each other on one machine: Claude Opus 5,
 Claude Code 2.1.271, 2026-09-15 and 2026-09-16.
 
-The question behind all of it: what actually keeps a writing-style instruction in
-front of the model, and what does it cost in unwanted side effects?
+## Everything tested, side by side
 
-## The headline
+### Does it shorten replies when a skill loads mid-turn?
 
-A skill loading mid-turn is the case that separates every approach. On a plain
-question they all work. Six runs per arm, one prompt that loads a read-only
-skill and then asks an ordinary question:
+The case that separates them. On a plain question they all work; the question is
+what survives a SKILL.md body landing between the directive and the reply. One
+prompt, six runs each, loading a read-only skill (`find-skills`).
 
-| arm | n | mean words | range | vs baseline | articles/100w |
-| :-- | --: | --: | :-- | --: | --: |
-| nothing | 6 | 337 | 305-364 | — | 10.3 |
-| output style | 6 | 268 | 219-315 | -21% | 7.9 |
-| function hook (`prompt.section`) | 6 | 212 | 174-230 | -37% | 7.6 |
-| command hook + function hook | 6 | 198 | 163-215 | -41% | 7.8 |
-| **command hook** | 6 | **178** | 139-216 | **-47%** | **6.2** |
+| arm | n | mean words | range | stdev | vs baseline | articles/100w |
+| :-- | --: | --: | :-- | --: | --: | --: |
+| nopus (`Stop` hook) | 6 | 361 | 311-405 | 37 | +7% | 10.8 |
+| nothing | 6 | 337 | 305-364 | 21 | — | 10.3 |
+| output style | 6 | 268 | 219-315 | 42 | -21% | 7.9 |
+| function hook (`prompt.section`) | 6 | 212 | 174-230 | 20 | -37% | 7.6 |
+| command hook + function hook | 6 | 198 | 163-215 | 19 | -41% | 7.8 |
+| **command hook (this repo)** | 6 | **178** | 139-216 | 30 | **-47%** | **6.2** |
 
-The command hook wins, and the margins clear their error bars: 89 words below
-the output style (se 21) and 34 below the function hook (se 15).
+Differences that clear their own error bars: command hook beats output style by
+89 words (se 21) and the function hook by 34 (se 15). Command hook against the
+stacked pair is a tie, and nopus against nothing is a tie.
 
-This is the opposite of what the mechanism suggests. A command hook's
-`additionalContext` is a system reminder inside the conversation — the weakest
-channel Claude Code offers for an instruction. An output style sits in the system
-prompt and gets a periodic reminder the engine sends on its own. The strongest
-channel finished last and the weakest finished first.
+### Does it leak into work that must stay in normal prose?
 
-Stacking the command hook and the function hook gave 198 words, statistically
-tied with both singles. So "more injections per turn" does not explain the
-ordering either. No tested hypothesis explains it; the ranking is a measurement,
-not a theory.
+Twelve prompts. Eleven must come back as ordinary prose — a SKILL.md, a workflow
+task prompt, a Python function with a docstring, a commit message, client-voice
+copy, a 900-word article. One is a chat control that must come back terse.
 
-## Carve-out adherence
+| arm | cases graded | leaks | chat control |
+| :-- | --: | --: | --: |
+| command hook (this repo) | 10 | 0 | 0.0 |
+| output style | 10 | 0 | 0.0 |
+| function hook (`prompt.section`) | 11 | 0 | 0.6 |
+| upstream caveman skill | 11 | 0 | 1.0 |
+| nothing | 9 | 0 | 13.1 |
 
-Twelve prompts, eleven of which must come back as ordinary prose: a SKILL.md, a
-workflow task prompt, a Python function with a docstring, a commit message,
-client-voice copy, a 900-word article. The twelfth is a chat control that must
-come back terse.
+Every active arm holds. The control is what makes that trustworthy: same
+configuration, same session, and the chat answer went terse (0.0-1.0) while the
+artifact cases stayed in ordinary prose. With nothing active the chat answer
+scored 13.1, so the terseness came from the directive, not the question.
 
-Grader is article density. The directive says to drop "the", "a" and "an", so a
-low score means it was followed. Ordinary English runs roughly 6-12 per 100 words.
+### What each mechanism actually is
 
-| arm | leaks | chat control |
-| :-- | --: | --: |
-| command hook | 0 | 0.0 |
-| function hook | 0 | 0.6 |
-| output style | 0 | 0.0 |
-| upstream caveman skill | 0 | 1.0 |
+| arm | where the text lands | gates by model | fires |
+| :-- | :-- | :-- | :-- |
+| command hook | system reminder in the conversation | yes, reads the transcript | 4 events, every turn |
+| output style | system prompt | no | every request, plus an engine reminder |
+| function hook | system prompt, one named section | yes, `$.session.model()` | once per prompt assembly |
+| upstream caveman skill | skill body, on invocation | manual | when invoked |
+| nopus | nothing; rewrites after the fact | no | `Stop`, on finished replies |
 
-All four hold. Nothing bled into client copy, skill files, prompts, code, or
-commit messages, while the chat control went terse in every active arm.
+### The result contradicts the mechanism
 
-The control is what makes that trustworthy: same configuration, same session, and
-the chat answer went terse while the artifact cases did not.
+A command hook's `additionalContext` is a system reminder inside the
+conversation — the weakest channel Claude Code offers for an instruction. An
+output style sits in the system prompt and gets a periodic reminder the engine
+sends on its own. The weakest channel won by 89 words; the strongest finished
+fourth of five active arms.
+
+Stacking the command hook and the function hook gave 198 words, tied with both
+singles, so "more injections per turn" does not explain it either.
+
+No tested hypothesis explains the ordering. It is recorded as a measurement.
+
+### On nopus
+
+It finished last, slightly worse than no directive at all, and the difference
+from baseline is inside noise. No rewrite notice appeared in any of the six
+outputs, so it probably never triggered: its checks score word rarity and
+abstraction, and these replies are concrete — paths, hook names, numbers.
+
+So the number measures "nopus installed and silent", not "nopus working". Either
+way it cannot shorten anything here, because a blocked `Stop` appends a second
+reply rather than replacing the first.
 
 ## Comparison with the upstream `caveman` skill
 
